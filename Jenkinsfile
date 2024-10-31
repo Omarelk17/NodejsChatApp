@@ -46,15 +46,5 @@ pipeline {
                 }
             }
         }
-
-        stage('Cleanup') {
-            steps {
-                script {
-                    echo 'Cleaning up Docker resources...'
-                    // Optionally clean up unused resources
-                    sh "docker system prune -f"
-                }
-            }
-        }
     }
 }
