@@ -7,10 +7,10 @@ pipeline {
     }
 
     stages {
-        stage('Clone Repository') {
+        stage('Checkout SCM') {
             steps {
-                echo 'Cloning GitHub Repository...'
-                git branch: 'main', url: "${env.GIT_REPO}"
+                echo 'Checking out source code from GitHub Repository...'
+                checkout scm
             }
         }
 
@@ -18,7 +18,7 @@ pipeline {
             steps {
                 script {
                     echo 'Building and Tagging Docker Image with Docker Compose...'
-                    sh "ls"
+                    sh "ls" // This is optional; you can remove it if you don't need to list files.
                     sh "docker compose -f docker-compose.yml build app" 
                     sh "docker tag nodejschatapp ${DOCKER_IMAGE}:latest"
                     sh "docker tag nodejschatapp ${DOCKER_IMAGE}:${BUILD_NUMBER}"
@@ -53,8 +53,9 @@ pipeline {
     post {
         always {
             echo 'Cleaning up Docker resources...'
-            //sh "docker compose -f docker-compose.yml down"
-            //sh "docker system prune -f"
+            // Uncomment the following lines if you want to clean up after each run
+            // sh "docker compose -f docker-compose.yml down"
+            // sh "docker system prune -f"
         }
     }
 }
