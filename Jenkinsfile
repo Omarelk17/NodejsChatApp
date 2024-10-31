@@ -4,33 +4,18 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'omarelk18/nodejschatapp'
         GIT_REPO = 'https://github.com/Omarelk17/NodejsChatApp'
-        DOCKER_USERNAME = credentials('docker-username-id') // Update with your credentials ID
-        DOCKER_PASSWORD = credentials('docker-password-id') // Update with your credentials ID
     }
 
     stages {
-        stage('Checkout SCM') {
-            steps {
-                echo 'Checking out source code from GitHub Repository...'
-                checkout scm
-            }
-        }
-
-        stage('Login to Docker Hub') {
+        stage('Clone and Build') {
             steps {
                 script {
-                    echo 'Logging in to Docker Hub...'
-                    sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin"
-                }
-            }
-        }
+                    echo 'Cloning GitHub Repository and Building Docker Image...'
+                    // Clone the repository
+                    git branch: 'main', url: "${env.GIT_REPO}"
 
-        stage('Build and Tag Docker Image with Compose') {
-            steps {
-                script {
-                    echo 'Building and Tagging Docker Image with Docker Compose...'
-                    sh "ls"
-                    sh "docker compose -f docker-compose.yml build app" 
+                    // Build the Docker image
+                    sh "docker compose -f docker-compose.yml build app"
                     sh "docker tag nodejschatapp ${DOCKER_IMAGE}:latest"
                     sh "docker tag nodejschatapp ${DOCKER_IMAGE}:${BUILD_NUMBER}"
                 }
@@ -41,13 +26,19 @@ pipeline {
             steps {
                 script {
                     echo 'Pushing Docker Image to Docker Hub...'
-                    sh "docker push ${DOCKER_IMAGE}:latest"
-                    sh "docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}"
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub_credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        // Log in to Docker Hub
+                        sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin"
+
+                        // Push images to Docker Hub
+                        sh "docker push ${DOCKER_IMAGE}:latest"
+                        sh "docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}"
+                    }
                 }
             }
         }
 
-        stage('Run Application with Docker Compose') {
+        stage('Run Application') {
             steps {
                 script {
                     echo 'Pulling and Running Docker Image with Docker Compose...'
@@ -56,14 +47,15 @@ pipeline {
                 }
             }
         }
-    }
 
-    post {
-        always {
-            echo 'Cleaning up Docker resources...'
-            // Uncomment to clean up
-            // sh "docker compose -f docker-compose.yml down"
-            // sh "docker system prune -f"
+        stage('Cleanup') {
+            steps {
+                script {
+                    echo 'Cleaning up Docker resources...'
+                    sh "docker compose -f docker-compose.yml down"
+                    sh "docker system prune -f"
+                }
+            }
         }
     }
 }
