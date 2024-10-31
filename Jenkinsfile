@@ -41,9 +41,8 @@ pipeline {
         stage('Run Application') {
             steps {
                 script {
-                    echo 'Pulling and Running Docker Image with Docker Compose...'
-                    sh "docker compose -f docker-compose.yml pull" // Ensure the latest image is pulled
-                    sh "docker compose -f docker-compose.yml up -d" // Run in detached mode
+                    echo 'Running Docker Application with Docker Compose...'
+                    sh "docker compose -f docker-compose.yml up -d" // Start the application in detached mode
                 }
             }
         }
