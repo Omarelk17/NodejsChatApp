@@ -42,8 +42,8 @@ pipeline {
             steps {
                 script {
                     echo 'Pulling and Running Docker Image with Docker Compose...'
-                    sh "docker pull ${DOCKER_IMAGE}:latest"
-                    sh "docker compose -f docker-compose.yml up -d"
+                    sh "docker compose -f docker-compose.yml pull" // Ensure the latest image is pulled
+                    sh "docker compose -f docker-compose.yml up -d" // Run in detached mode
                 }
             }
         }
@@ -52,7 +52,7 @@ pipeline {
             steps {
                 script {
                     echo 'Cleaning up Docker resources...'
-                    sh "docker compose -f docker-compose.yml down"
+                    // Optionally clean up unused resources
                     sh "docker system prune -f"
                 }
             }
