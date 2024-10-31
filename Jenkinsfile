@@ -4,6 +4,8 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'omarelk18/nodejschatapp'
         GIT_REPO = 'https://github.com/Omarelk17/NodejsChatApp'
+        DOCKER_USERNAME = credentials('docker-username-id') // Update with your credentials ID
+        DOCKER_PASSWORD = credentials('docker-password-id') // Update with your credentials ID
     }
 
     stages {
@@ -14,11 +16,20 @@ pipeline {
             }
         }
 
+        stage('Login to Docker Hub') {
+            steps {
+                script {
+                    echo 'Logging in to Docker Hub...'
+                    sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin"
+                }
+            }
+        }
+
         stage('Build and Tag Docker Image with Compose') {
             steps {
                 script {
                     echo 'Building and Tagging Docker Image with Docker Compose...'
-                    sh "ls" // This is optional; you can remove it if you don't need to list files.
+                    sh "ls"
                     sh "docker compose -f docker-compose.yml build app" 
                     sh "docker tag nodejschatapp ${DOCKER_IMAGE}:latest"
                     sh "docker tag nodejschatapp ${DOCKER_IMAGE}:${BUILD_NUMBER}"
@@ -40,10 +51,7 @@ pipeline {
             steps {
                 script {
                     echo 'Pulling and Running Docker Image with Docker Compose...'
-                    // Pull the latest image
                     sh "docker pull ${DOCKER_IMAGE}:latest"
-                    
-                    // Start application container using docker-compose
                     sh "docker compose -f docker-compose.yml up -d"
                 }
             }
@@ -53,7 +61,7 @@ pipeline {
     post {
         always {
             echo 'Cleaning up Docker resources...'
-            // Uncomment the following lines if you want to clean up after each run
+            // Uncomment to clean up
             // sh "docker compose -f docker-compose.yml down"
             // sh "docker system prune -f"
         }
